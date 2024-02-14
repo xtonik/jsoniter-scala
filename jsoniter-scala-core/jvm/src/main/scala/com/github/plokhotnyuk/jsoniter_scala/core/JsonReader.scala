@@ -366,6 +366,16 @@ final class JsonReader private[jsoniter_scala](
     * @throws JsonReaderException in cases of reaching the end of input or illegal format of JSON key
     */
   def readKeyAsBoolean(): Boolean = {
+    if (head + 7 < tail) {
+      val bs = ByteArrayAccess.getLong(buf, head)
+      if (bs == 0x3A226573_6C616622L) { // ~ "false":
+        head += 8
+        false
+      } else if (bs & 0x00FFFFFF_FFFFFFFFL == 0x003A2265_75727422L) { // ~ "true":
+        head += 7
+        true
+      }
+    }
     nextTokenOrError('"', head)
     val x = parseBoolean(isToken = false, head)
     nextByteOrError('"', head)

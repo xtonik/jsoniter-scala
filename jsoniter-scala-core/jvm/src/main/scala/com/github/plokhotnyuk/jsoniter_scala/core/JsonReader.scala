@@ -2071,7 +2071,7 @@ final class JsonReader private[jsoniter_scala](
     var s = -1
     if (b == '-') {
       b = nextByte(head)
-      s = 0
+      s = 1
     }
     if (b < '0' || b > '9') numberError()
     var x = '0' - b
@@ -2087,16 +2087,14 @@ final class JsonReader private[jsoniter_scala](
         b = buf(pos)
         b >= '0' && b <= '9'
       }) {
-        if (x < -214748364 || {
-          x = x * 10 + ('0' - b)
-          x > 0
-        }) intOverflowError(pos)
+        if (x < -214748363) {
+          if (x < -214748364 || ((b == '9' || (b == '8' && s == -1))) intOverflowError(pos)
+        }
+        x = x * 10 + ('0' - b)
         pos += 1
       }
       head = pos
-      x ^= s
-      x -= s
-      if ((s & x) == -2147483648) intOverflowError(pos - 1)
+      x *= s
       if ((b | 0x20) == 'e' || b == '.') numberError(pos)
     }
     x
@@ -2109,7 +2107,7 @@ final class JsonReader private[jsoniter_scala](
     var s = -1L
     if (b == '-') {
       b = nextByte(head)
-      s = 0L
+      s = 1L
     }
     if (b < '0' || b > '9') numberError()
     var x = ('0' - b).toLong
@@ -2143,16 +2141,14 @@ final class JsonReader private[jsoniter_scala](
         b = buf(pos)
         b >= '0' && b <= '9'
       }) {
-        if (x < -922337203685477580L || {
-          x = x * 10 + ('0' - b)
-          x > 0
-        }) longOverflowError(pos)
+        if (x < -922337203685477579L) {
+          if (x < -922337203685477580L || ((b == '9' || (b == '8' && s == 1L))) longOverflowError(pos)
+        }
+        x = x * 10 + ('0' - b)
         pos += 1
       }
       head = pos
-      x ^= s
-      x -= s
-      if ((s & x) == -9223372036854775808L) longOverflowError(pos - 1)
+      x *= s
       if ((b | 0x20) == 'e' || b == '.') numberError(pos)
     }
     x
@@ -2883,10 +2879,10 @@ final class JsonReader private[jsoniter_scala](
 
   private[this] def parseDuration(): Duration = {
     var b = nextByte(head)
-    var s = 0L
+    var s = 1L
     if (b == '-') {
       b = nextByte(head)
-      s = ~s
+      s = -s
     }
     if (b != 'P') durationOrPeriodStartError(s.toInt)
     b = nextByte(head)
@@ -2901,7 +2897,7 @@ final class JsonReader private[jsoniter_scala](
       var sx = s
       if (b == '-') {
         b = nextByte(head)
-        sx = ~sx
+        sx = -sx
       }
       if (b < '0' || b > '9') durationOrPeriodDigitError(s.toInt, sx.toInt, state)
       var x = ('0' - b).toLong
@@ -2915,10 +2911,10 @@ final class JsonReader private[jsoniter_scala](
         b = buf(pos)
         b >= '0' && b <= '9'
       }) {
-        if (x < -922337203685477580L || {
-          x = x * 10 + ('0' - b)
-          x > 0
-        }) durationError(pos)
+        if (x < -922337203685477579L) {
+          if (x < -922337203685477580L || ((b == '9' || (b == '8' && s == 1L))) durationError(pos)
+        }
+        x = x * 10 + ('0' - b)
         pos += 1
       }
       if (b == 'D' && state < 0) {
@@ -2934,8 +2930,7 @@ final class JsonReader private[jsoniter_scala](
         seconds = sumSeconds((sx - (x ^ sx)) * 60, seconds, pos)
         state = 2
       } else if (b == 'S' || b == '.') {
-        if ((x | sx) == -9223372036854775808L) durationError(pos)
-        seconds = sumSeconds(sx - (x ^ sx), seconds, pos)
+        seconds = sumSeconds(x * sx, seconds, pos)
         state = 3
         if (b == '.') {
           pos += 1
@@ -3480,7 +3475,7 @@ final class JsonReader private[jsoniter_scala](
 
   private[this] def parsePeriod(): Period = {
     var b = nextByte(head)
-    var s = 0
+    var s = 1
     if (b == '-') {
       b = nextByte(head)
       s = -1
@@ -3492,7 +3487,7 @@ final class JsonReader private[jsoniter_scala](
       var sx = s
       if (b == '-') {
         b = nextByte(head)
-        sx = ~sx
+        sx = -sx
       }
       if (b < '0' || b > '9') durationOrPeriodDigitError(s, sx, state)
       var x = '0' - b
@@ -3506,14 +3501,13 @@ final class JsonReader private[jsoniter_scala](
         b = buf(pos)
         b >= '0' && b <= '9'
       }) {
-        if (x < -214748364 || {
-          x = x * 10 + ('0' - b)
-          x > 0
-        }) periodError(pos)
+        if (x < -214748363) {
+          if (x < -214748364 || ((b == '9' || (b == '8' && sx == 1))) periodError(pos)
+        }
+        x = x * 10 + ('0' - b)
         pos += 1
       }
-      x = sx - (x ^ sx)
-      if ((sx | x) == -2147483648) periodError(pos)
+      x *= sx
       if (b == 'Y' && state <= 0) {
         years = x
         state = 1

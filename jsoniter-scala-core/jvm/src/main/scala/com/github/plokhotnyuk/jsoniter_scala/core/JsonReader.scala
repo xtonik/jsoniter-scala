@@ -4411,7 +4411,19 @@ final class JsonReader private[jsoniter_scala](
     if (charBuf.length < required) growCharBuf(required): Unit
 
   @tailrec
-  private[this] def skipString(evenBackSlashes: Boolean, pos: Int): Int =
+   private[this] def skipString(evenBackSlashes: Boolean, pos: Int): Int = {
+    if (evenBackSlashes && pos + 7 < tail) {
+      val bs = ByteArrayAccess.getLong(buf, pos)
+      val quotesAndBackSlashes = 0x80808080_80808080L &
+        (((bs ^ 0x5D5D5D5D5D5D5D5DL) + 0x01010101_01010101L) | (bs ^ 0x23232323_23232323L) + 0x01010101_01010101L)
+      if (quotesAndBackSlashes == 0) skipString(evenBackSlashes = false, pos + 8)
+      val offset = java.lang.Long.numberOfTrailingZeros(quotesAndBackSlashes) >> 3
+      if ((bs >> (offset << 3)) & 0xFF == '"') {
+        pos + offset
+      } else {
+        skipString(evenBackSlashes = false, pos + offset + 1)
+      }
+    }
     if (pos < tail) {
       if (evenBackSlashes) {
         val b = buf(pos)
@@ -4419,7 +4431,7 @@ final class JsonReader private[jsoniter_scala](
         else skipString(b != '\\', pos + 1)
       } else skipString(evenBackSlashes = true, pos + 1)
     } else skipString(evenBackSlashes, loadMoreOrError(pos))
-
+  }
   private[this] def skipNumber(p: Int): Int = {
     var pos = p
     var buf = this.buf

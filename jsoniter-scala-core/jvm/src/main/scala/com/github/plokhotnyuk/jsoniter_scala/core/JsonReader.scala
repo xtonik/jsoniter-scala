@@ -2073,10 +2073,10 @@ final class JsonReader private[jsoniter_scala](
       b = nextByte(head)
       s = 0
     }
-    if (b < '0' || b > '9') numberError()
     var x = '0' - b
     if (isToken && x == 0) ensureNotLeadingZero()
     else {
+      if (b < '0' || b > '9') numberError()
       var pos = head
       var buf = this.buf
       while ((pos < tail || {
@@ -2111,10 +2111,10 @@ final class JsonReader private[jsoniter_scala](
       b = nextByte(head)
       s = 0L
     }
-    if (b < '0' || b > '9') numberError()
     var x = ('0' - b).toLong
     if (isToken && x == 0) ensureNotLeadingZero()
     else {
+      if (b < '0' || b > '9') numberError()
       var pos = head
       var buf = this.buf
       var dec = 0L
@@ -2178,7 +2178,6 @@ final class JsonReader private[jsoniter_scala](
       b = nextByte(head)
       isNeg = true
     }
-    if (b < '0' || b > '9') numberError()
     var pos = head
     var buf = this.buf
     val from = pos - 1
@@ -2200,6 +2199,7 @@ final class JsonReader private[jsoniter_scala](
         b >= '0' && b <= '9'
       }) leadingZeroError(pos - 1)
     } else {
+      if (b < '0' || b > '9') numberError()
       while ((pos < tail || {
         pos = loadMore(pos)
         buf = this.buf
@@ -2326,7 +2326,6 @@ final class JsonReader private[jsoniter_scala](
       b = nextByte(head)
       isNeg = true
     }
-    if (b < '0' || b > '9') numberError()
     var pos = head
     var buf = this.buf
     val from = pos - 1
@@ -2348,6 +2347,7 @@ final class JsonReader private[jsoniter_scala](
         b >= '0' && b <= '9'
       }) leadingZeroError(pos - 1)
     } else {
+      if (b < '0' || b > '9') numberError()
       while ((pos < tail || {
         pos = loadMore(pos)
         buf = this.buf
@@ -2475,11 +2475,11 @@ final class JsonReader private[jsoniter_scala](
         b = nextByte(head)
         s = -1
       }
-      if (b < '0' || b > '9') numberError()
       if (isToken && b == '0') {
         ensureNotLeadingZero()
         BigInt(0)
       } else {
+        if (b < '0' || b > '9') numberError()
         var pos = head
         var buf = this.buf
         var from = pos - 1
@@ -2534,7 +2534,6 @@ final class JsonReader private[jsoniter_scala](
         b = nextByte(head)
         s = -1
       }
-      if (b < '0' || b > '9') numberError()
       var pos = head
       var buf = this.buf
       var from = pos - 1
@@ -2554,6 +2553,7 @@ final class JsonReader private[jsoniter_scala](
           b >= '0' && b <= '9'
         }) leadingZeroError(pos - 1)
       } else {
+        if (b < '0' || b > '9') numberError()
         digits -= pos
         var m, bs = 0L
         while ((pos + 7 < tail || {
